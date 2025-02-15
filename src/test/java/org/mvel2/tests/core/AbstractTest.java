@@ -151,25 +151,35 @@ public abstract class AbstractTest extends BaseMvelTestCase {
     }
 
     if (threads.length > 1) {
-      boolean threadsRunning = true;
-      while (threadsRunning) {
-        threadsRunning = false;
-        for (Thread thread : threads) {
-          if (thread.isAlive()) {
-            System.out.println("Thread Alive.");
-            threadsRunning = true;
-            break;
-          }
-        }
-
+      for (Thread thread : threads) {
         try {
-          Thread.sleep(250);
-        }
-        catch (InterruptedException e) {
+          thread.join();
+        } catch (InterruptedException e) {
           break;
         }
       }
     }
+
+//    if (threads.length > 1) {
+//      boolean threadsRunning = true;
+//      while (threadsRunning) {
+//        threadsRunning = false;
+//        for (Thread thread : threads) {
+//          if (thread.isAlive()) {
+//            System.out.println("Thread Alive.");
+//            threadsRunning = true;
+//            break;
+//          }
+//        }
+//
+//        try {
+//          Thread.sleep(250);
+//        }
+//        catch (InterruptedException e) {
+//          break;
+//        }
+//      }
+//    }
 
     System.out.println("All threads have stopped.");
     System.out.println("Result Count: " + results.size());
