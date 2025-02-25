@@ -24,6 +24,7 @@ import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -31,6 +32,7 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -479,32 +481,44 @@ public abstract class AbstractTest extends BaseMvelTestCase {
 
   protected static Serializable serializationTest(Serializable s) throws Exception {
     File file = new File("./mvel_ser_test" + currentTimeMillis() + Math.round(Math.random() * 1000) + ".tmp");
-    InputStream inputStream = null;
-    ObjectInputStream objectIn = null;
-    try {
-      file.createNewFile();
-      file.deleteOnExit();
 
-      FileOutputStream fileStream = new FileOutputStream(file);
-      ObjectOutputStream objectOut = new ObjectOutputStream(new BufferedOutputStream(fileStream));
+    file.createNewFile();
+    file.deleteOnExit();
+
+    try (FileOutputStream fileStream = new FileOutputStream(file);
+          ObjectOutputStream objectOut = new ObjectOutputStream(new BufferedOutputStream(fileStream)) ) {
+
       objectOut.writeObject(s);
-
       objectOut.flush();
+      objectOut.close();
+
       fileStream.flush();
       fileStream.close();
 
-      inputStream = new BufferedInputStream(new FileInputStream(file));
+      waitForFileWrite(file);
 
-      objectIn = new ObjectInputStream(inputStream);
+      if (!file.exists() || file.length() == 0) {
+        throw new IOException("File was not written correctly");
+      }
 
-      return (Serializable) objectIn.readObject();
+      try (InputStream inputStream = new BufferedInputStream(Files.newInputStream(file.toPath()));
+           ObjectInputStream objectIn = new ObjectInputStream(inputStream)) {
+        return (Serializable) objectIn.readObject();
+      }
+
     }
-    finally {
-      if (inputStream != null) inputStream.close();
-      if (objectIn != null) objectIn.close();
-      // file.delete();
-    }
 
+  }
+
+  private static void waitForFileWrite(File file) throws InterruptedException {
+    int retries = 10;
+    while (retries > 0) {
+      if (file.length() > 0) {
+        return;
+      }
+      Thread.sleep(10);
+      retries--;
+    }
   }
 
 
