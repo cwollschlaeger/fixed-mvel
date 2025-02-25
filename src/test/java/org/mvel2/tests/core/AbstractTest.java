@@ -290,6 +290,7 @@ public abstract class AbstractTest extends BaseMvelTestCase {
     ExpressionCompiler compiler = new ExpressionCompiler(ex);
     StringAppender failErrors = new StringAppender();
 
+    System.out.println("EXPRESSION BEFORE COMPILE: " + ex);
     CompiledExpression compiled = compiler.compile();
     Object first = null, second = null, third = null, fourth = null, fifth = null, sixth = null, seventh = null,
         eighth = null;
